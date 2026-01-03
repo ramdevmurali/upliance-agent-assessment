@@ -18,7 +18,24 @@ The Agent (Gemini) handles the Conversational UX.
 The `GameReferee` class serves as the strict Logic Engine.
 *   **Responsibility:** It executes the game rules, enforces the "Bomb" constraint, and persists the score.
 *   **Mechanism:** Logic is handled via strict Python control flow (if/else), ensuring zero hallucinations regarding the score or winner.
+
+### Tool Contract (Technical Specification)
+The agent interacts with the logic engine via a structured JSON bridge. This ensures strict data types and prevents the LLM from hallucinating game states or scores.
+
+**Interface Schema:**
+- **Function:** `play_round(user_move: string)`
+- **Returns:**
+  ```json
+  {
+    "round": "int",
+    "user_move": "string",
+    "bot_move": "string",
+    "outcome": "user | bot | draw | wasted",
+    "current_scores": {"user": "int", "bot": "int"},
+    "game_over": "bool"
+  }
 ---
+
 
 ## 2. State Management Strategy
 
