@@ -19,21 +19,34 @@ The `GameReferee` class serves as the strict Logic Engine.
 *   **Responsibility:** It executes the game rules, enforces the "Bomb" constraint, and persists the score.
 *   **Mechanism:** Logic is handled via strict Python control flow (if/else), ensuring zero hallucinations regarding the score or winner.
 
-### Tool Contract (Technical Specification)
-The agent interacts with the logic engine via a structured JSON bridge. This ensures strict data types and prevents the LLM from hallucinating game states or scores.
+### Tool Specification (JSON Schema)
+The agent interacts with the logic engine via a structured interface. Below is the conceptual schema the Gemini Agent uses to call the game logic:
 
-**Interface Schema:**
-- **Function:** `play_round(user_move: string)`
-- **Returns:**
-  ```json
-  {
-    "round": "int",
-    "user_move": "string",
-    "bot_move": "string",
-    "outcome": "user | bot | draw | wasted",
-    "current_scores": {"user": "int", "bot": "int"},
-    "game_over": "bool"
+```json
+{
+  "name": "play_round",
+  "description": "Executes a single turn of Rock-Paper-Scissors-Plus",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "user_move": {
+        "type": "string",
+        "enum": ["rock", "paper", "scissors", "bomb"],
+        "description": "The move selected by the user"
+      }
+    },
+    "required": ["user_move"]
+  },
+  "response": {
+    "type": "object",
+    "properties": {
+      "round": { "type": "integer" },
+      "outcome": { "type": "string", "enum": ["user", "bot", "draw", "wasted"] },
+      "current_scores": { "type": "object" },
+      "game_over": { "type": "boolean" }
+    }
   }
+}
 ---
 
 
