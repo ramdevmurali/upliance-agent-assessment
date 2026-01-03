@@ -47,8 +47,7 @@ The agent interacts with the logic engine via a structured interface. Below is t
     }
   }
 }
----
-
+ ```
 
 ## 2. State Management Strategy
 
