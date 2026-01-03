@@ -7,31 +7,50 @@
 
 ## 1. Architecture: Brain vs. Body
 
-To solve the challenge of building a reliable referee using a probabilistic LLM, I implemented a strict **"Tool Contract"** architecture that separates intent from logic.
+To build a reliable referee using a probabilistic LLM, I implemented a strict **"Tool Contract"** architecture that separates intent from logic.
 
 ### The Brain: Intent Recognition (Google Gen AI SDK)
 The Agent (Gemini) handles the Conversational UX.
-*   **Responsibility:** It translates natural language ("Drop a bomb on him!") into structured API calls.
-*   **Constraint:** The system prompt explicitly forbids the Agent from calculating results internally. It *must* defer to the tool.
+*   **Responsibility:** It translates natural language ("Drop a bomb on him!", "I choose rock") into structured API calls.
+*   **Constraint:** The system prompt explicitly forbids the Agent from calculating results internally. It must defer to the tool for the source of truth.
 
 ### The Body: Deterministic State Machine (Python)
-The `GameReferee` class serves as the Source of Truth.
+The `GameReferee` class serves as the strict Logic Engine.
 *   **Responsibility:** It executes the game rules, enforces the "Bomb" constraint, and persists the score.
-*   **Mechanism:** Logic is handled via strict Python control flow (`if/else`), ensuring zero hallucinations regarding the score or winner.
-
+*   **Mechanism:** Logic is handled via strict Python control flow (if/else), ensuring zero hallucinations regarding the score or winner.
 ---
 
 ## 2. State Management Strategy
 
 The assignment required state persistence and strict rule enforcement. I modeled the state explicitly in the backend:
 
-*   **Persistence:** `round_count` and `scores` are stored in the Python instance, persisting across the chat loop.
+*   **Persistence:** `round_num` and `scores` are stored in the Python instance, persisting across the chat session.
 *   **Constraint Enforcement:** The "Bomb" rule is enforced via a boolean flag (`user_bomb_used`). This is immutable once set, preventing the Agent from "forgetting" that a power-up was consumed.
-*   **Input Sanitization:** The logic layer validates moves before execution. If a user inputs "scissor" (singular), the engine catches it and triggers a "Wasted Round" state, preventing the game loop from crashing or proceeding with invalid data.
+*   **Input Resilience (Fuzzy Matching):** I implemented `difflib` (standard library) to handle minor user typos (e.g., "sissors" -> "scissors"). This ensures a smooth conversational flow without compromising the strict logic engine.
 
 ---
 
-## 3. Operational Guide
+## 3. Engineering Rigor: Unit Testing
+
+I have included a dedicated test suite (`test_game_logic.py`) to verify the state machine's correctness independent of the AI.
+
+**Why Testing Matters Here:**
+Because the Bot has a random 10% chance to throw a "Bomb," the logic is non-deterministic. I utilized `unittest.mock` to patch the random number generator, ensuring the tests are reliable and repeatable.
+
+*   **Mocking Randomness:** Tests force the bot to play specific moves to verify win/loss conditions.
+*   **Fuzzy Logic Verification:** A specific test case verifies that typos are correctly auto-resolved to the nearest valid move.
+*   **Edge Case Verification:** Tests ensure that illegal moves (like double-bombing) trigger "Wasted Round" states as per the requirements.
+
+**Run the test suite:**
+```bash
+python3 test_game_logic.py
+Expected Output: Ran 4 
+```
+tests ... OK
+
+---
+
+## 4. Operational Guide
 
 ### Prerequisites
 *   Python 3.10+
@@ -43,7 +62,10 @@ The assignment required state persistence and strict rule enforcement. I modeled
     pip install -r requirements.txt
     ```
 2.  **Configure API Key:**
-    Create a `.env` file: `GOOGLE_API_KEY=AIzaSy...`
+    Create a `.env` file in the root directory:
+    ```env
+    GOOGLE_API_KEY=your_api_key_here
+    ```
 3.  **Run the Referee:**
     ```bash
     python3 main.py
@@ -51,17 +73,17 @@ The assignment required state persistence and strict rule enforcement. I modeled
 
 ---
 
-## 4. Trade-offs & Future Improvements
+## 5. Trade-offs & Future Improvements
 
-### In-Memory State vs. Database
+### In-Memory State vs. Distributed Cache
 *   **Decision:** State is currently held in Python memory.
-*   **Trade-off:** Game progress is lost if the script restarts.
-*   **Production View:** In a real-world appliance (like Upliance's hardware), I would persist state in **Redis** keyed by `session_id` to handle device reboots and concurrent users.
+*   **Trade-off:** Game progress is lost if the script restarts or the session disconnects.
+*   **Production View:** For a production appliance, I would persist state in **Redis** keyed by a `session_id`. This allows the AI service to remain stateless and resilient to reboots or network interruptions.
 
-### Strict Validation vs. Fuzzy Matching
-*   **Decision:** Inputs must match valid moves exactly. Invalid inputs waste a round immediately.
-*   **Improvement:** For better UX, I would implement **fuzzy matching** (Levenshtein distance) in the backend to auto-correct minor typos (e.g., `sissors` -> `scissors`) instead of penalizing the user.
+### Intent Matching: Fuzzy Logic vs. Semantic Search
+*   **Decision:** I utilized `difflib` for lightweight fuzzy matching of move keywords.
+*   **Reasoning:** This is highly efficient for a small set of valid moves. For a more complex product (e.g., a recipe database), I would transition to **Semantic Similarity** using vector embeddings to understand the "meaning" of user requests rather than just spelling.
 
-### Synchronous Tooling
-*   **Decision:** The tool is called synchronously for simplicity.
-*   **Improvement:** Converting to `async/await` patterns would allow the agent to handle higher throughput without blocking the event loop.
+### High Concurrency
+*   **Decision:** The application runs in a synchronous CLI loop.
+*   **Improvement:** In a real-world deployment, the tool execution would be converted to **Asynchronous (async/await)** patterns to handle thousands of concurrent kitchen device sessions without blocking the event loop.
