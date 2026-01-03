@@ -44,9 +44,9 @@ Because the Bot has a random 10% chance to throw a "Bomb," the logic is non-dete
 **Run the test suite:**
 ```bash
 python3 test_game_logic.py
-Expected Output: Ran 4 
+Expected Output: Ran 4 tests ... OK
 ```
-tests ... OK
+
 
 ---
 
