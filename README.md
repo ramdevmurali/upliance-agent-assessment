@@ -48,7 +48,6 @@ python3 test_game_logic.py
 Expected Output: Ran 4 tests ... OK
 
 
-
 ---
 
 ## 4. Operational Guide
@@ -58,16 +57,28 @@ Expected Output: Ran 4 tests ... OK
 *   Google API Key (Gemini Flash tier access)
 
 ### Setup & Run
-1.  **Install Dependencies:**
+1.  **Clone the repository:**
     ```bash
+    git clone https://github.com/ramdevmurali/upliance-agent-assessment.git
+    cd upliance-agent-assessment
+    ```
+
+2.  **Install Dependencies:**
+    ```bash
+    # It is recommended to use a virtual environment
+    python3 -m venv venv
+    source venv/bin/activate
+    
     pip install -r requirements.txt
     ```
-2.  **Configure API Key:**
+
+3.  **Configure API Key:**
     Create a `.env` file in the root directory:
     ```env
     GOOGLE_API_KEY=your_api_key_here
     ```
-3.  **Run the Referee:**
+
+4.  **Run the Referee:**
     ```bash
     python3 main.py
     ```
