@@ -1,7 +1,6 @@
 # AI Game Referee: Rock-Paper-Scissors-Plus
 
-**Candidate:** Ramdev Murali
-**Date:** January 3, 2026
+
 
 ---
 
